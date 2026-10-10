@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
+    <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
+    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)\..\..\contracts\</OpenApiDocumentsDirectory>
+    <UserSecretsId>53b1a05e-e9aa-450b-9145-70a83b69da4f</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.12">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Folio.Application\Folio.Application.csproj" />
+    <ProjectReference Include="..\Folio.Infrastructure\Folio.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <!-- Copy generated OpenAPI JSON to contract.yaml (YAML-compatible JSON superset for tooling) -->
+  <Target Name="CopyOpenApiContract" AfterTargets="GenerateOpenApiDocuments">
+    <Copy SourceFiles="$(OpenApiDocumentsDirectory)Folio.Api.json" DestinationFiles="$(OpenApiDocumentsDirectory)contract.json" Condition="Exists('$(OpenApiDocumentsDirectory)Folio.Api.json')" />
+    <Copy SourceFiles="$(OpenApiDocumentsDirectory)Folio.Api.json" DestinationFiles="$(OpenApiDocumentsDirectory)contract.yaml" Condition="Exists('$(OpenApiDocumentsDirectory)Folio.Api.json')" />
+  </Target>
+
+</Project>

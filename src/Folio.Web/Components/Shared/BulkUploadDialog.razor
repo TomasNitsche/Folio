@@ -1,0 +1,164 @@
+@using Folio.Application.DTOs.Documents
+@inject FolioApiClient Api
+
+@if (Visible)
+{
+    <div class="modal-overlay open" @onclick="Close"></div>
+    <div class="modal-dialog open">
+        <div class="modal-header">
+            <div>
+                <h2>Bulk upload</h2>
+                <p>Upload the same file to @EntityCount selected @(EntityCount == 1 ? "entity" : "entities").</p>
+            </div>
+            <button class="btn btn-ghost btn-icon" @onclick="Close">✕</button>
+        </div>
+
+        <div class="modal-body">
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <div class="alert alert-error">@_error</div>
+            }
+
+            @if (!string.IsNullOrEmpty(_success))
+            {
+                <div class="alert alert-success">@_success</div>
+            }
+
+            @if (_result?.Failed.Count > 0)
+            {
+                <div class="alert alert-error">
+                    <strong>@_result.FailureCount failed:</strong>
+                    <ul class="bulk-upload-errors">
+                        @foreach (var item in _result.Failed)
+                        {
+                            <li>@(item.EntityName ?? item.PeriodEntityId.ToString()): @item.Error</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <div class="bulk-upload-kind">
+                <label class="bulk-kind-option @(_kind == BulkUploadKind.StaticReference ? "selected" : "")">
+                    <input type="radio"
+                           name="bulkKind"
+                           checked="@(_kind == BulkUploadKind.StaticReference)"
+                           @onchange="() => SelectKind(BulkUploadKind.StaticReference)" />
+                    <div>
+                        <strong>Static reference</strong>
+                        <span>Directive or confirmation form → static folder</span>
+                    </div>
+                </label>
+                <label class="bulk-kind-option @(_kind == BulkUploadKind.ExcelPackage ? "selected" : "")">
+                    <input type="radio"
+                           name="bulkKind"
+                           checked="@(_kind == BulkUploadKind.ExcelPackage)"
+                           @onchange="() => SelectKind(BulkUploadKind.ExcelPackage)" />
+                    <div>
+                        <strong>Excel package template</strong>
+                        <span>Empty template Folio sends for filling → v0 per entity (or next version)</span>
+                    </div>
+                </label>
+            </div>
+
+            <label class="upload-zone">
+                <InputFile OnChange="OnFileSelected" disabled="@_uploading" accept="@AcceptFilter" />
+                <div class="upload-zone-icon">↑</div>
+                <p>@(_fileName ?? UploadPrompt)</p>
+                <span>@UploadHint</span>
+            </label>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-secondary" @onclick="Close">Cancel</button>
+            <button class="btn btn-primary" @onclick="Upload" disabled="@(_uploading || _file is null)">
+                @(_uploading ? "Uploading…" : $"Upload to {EntityCount} entities")
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public Guid PeriodId { get; set; }
+    [Parameter] public IReadOnlyList<Guid> PeriodEntityIds { get; set; } = [];
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnUploaded { get; set; }
+
+    private IBrowserFile? _file;
+    private string? _fileName;
+    private bool _uploading;
+    private string? _error;
+    private string? _success;
+    private BulkUploadResultDto? _result;
+    private BulkUploadKind _kind = BulkUploadKind.StaticReference;
+
+    private int EntityCount => PeriodEntityIds.Count;
+
+    private string AcceptFilter => _kind == BulkUploadKind.ExcelPackage
+        ? ".xlsx,.xls"
+        : ".pdf,.docx,.xlsx,.xls";
+
+    private string UploadPrompt => _kind == BulkUploadKind.ExcelPackage
+        ? "Click to choose Excel package template"
+        : "Click to choose static reference file";
+
+    private string UploadHint => _kind == BulkUploadKind.ExcelPackage
+        ? "XLSX · saved to each entity's packages folder as a new version"
+        : "PDF, DOCX, XLSX · saved to each entity's static folder";
+
+    private void SelectKind(BulkUploadKind kind)
+    {
+        _kind = kind;
+        _file = null;
+        _fileName = null;
+        _error = null;
+        _success = null;
+        _result = null;
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _file = e.FileCount > 0 ? e.File : null;
+        _fileName = _file?.Name;
+        _error = null;
+        _success = null;
+        _result = null;
+    }
+
+    private async Task Upload()
+    {
+        if (_file is null || PeriodEntityIds.Count == 0) return;
+
+        _uploading = true;
+        _error = null;
+        _success = null;
+        try
+        {
+            await using var stream = _file.OpenReadStream(maxAllowedSize: 25 * 1024 * 1024);
+            _result = await Api.BulkUploadAsync(PeriodId, _kind, PeriodEntityIds, stream, _file.Name);
+            _success = $"Uploaded to {_result.SuccessCount} of {EntityCount} entities.";
+            await OnUploaded.InvokeAsync();
+            if (_result.FailureCount == 0)
+                await Close();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _uploading = false;
+        }
+    }
+
+    private async Task Close()
+    {
+        _file = null;
+        _fileName = null;
+        _error = null;
+        _success = null;
+        _result = null;
+        _kind = BulkUploadKind.StaticReference;
+        await OnClose.InvokeAsync();
+    }
+}

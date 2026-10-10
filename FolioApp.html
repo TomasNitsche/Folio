@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folio — Club Reporting</title>
+    <link rel="stylesheet" href="FolioApp.css">
+</head>
+<body>
+
+<!-- ═══════════════════ TOP BAR ═══════════════════ -->
+<header class="topbar">
+    <div class="topbar-left">
+        <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+        <div class="brand">
+            <div class="brand-icon">F</div>
+            <div>
+                <span class="brand-name">Folio</span>
+                <span class="brand-tagline">Club Reporting</span>
+            </div>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <button class="topbar-btn" aria-label="Notifikace">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span class="notification-badge">7</span>
+        </button>
+        <button class="topbar-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
+            </svg>
+            Nápověda
+        </button>
+        <div class="user-menu">
+            <div class="user-avatar">TT</div>
+            <div class="user-info">
+                <div class="user-name">Test Testovič</div>
+                <div class="user-role">League office · Admin</div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity="0.6">
+                <polyline points="6 9 12 15 18 9"/>
+            </svg>
+        </div>
+    </div>
+</header>
+
+<!-- ═══════════════════ LAYOUT ═══════════════════ -->
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-section-label">Typy potvrzení</div>
+
+        <button class="nav-item active" data-section="transfers">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            Player transfers
+            <span class="nav-badge">5</span>
+        </button>
+
+        <button class="nav-item" data-section="budgets">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+            Budgets
+            <span class="nav-badge">3</span>
+        </button>
+
+        <button class="nav-item" data-section="annual">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            Roční období
+            <span class="nav-badge">2</span>
+        </button>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-label">Správa</div>
+
+        <button class="nav-item" data-section="admin">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            Administrace
+        </button>
+
+        <div class="sidebar-footer">
+            <button class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                Nápověda
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content" id="mainContent">
+
+        <!-- ─── PLAYER TRANSFERS ─── -->
+        <div class="section-view active" id="section-transfers">
+            <div class="page-header">
+                <div class="page-header-left">
+                    <div class="breadcrumb">
+                        <span>Folio</span>
+                        <span class="breadcrumb-sep">›</span>
+                        <span>Player transfers</span>
+                    </div>
+                    <h1>Player transfers</h1>
+                </div>
+                <div class="page-header-right">
+                    <div class="period-selector" id="transfersPeriodSelector">
+                        <div class="period-nav">
+                            <button class="period-nav-btn" aria-label="Předchozí">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                            </button>
+                            <span class="period-label">Q2 2026</span>
+                            <button class="period-nav-btn" aria-label="Další">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                            </button>
+                        </div>
+                        <button class="period-btn">Q1 2026</button>
+                        <button class="period-btn active">Q2 2026</button>
+                        <button class="period-btn">Q3 2026</button>
+                        <button class="period-btn">Q4 2026</button>
+                    </div>
+                    <button class="btn btn-primary">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Nový balíček
+                    </button>
+                </div>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label">Celkem entit</span>
+                        <div class="kpi-icon total">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">12</div>
+                    <div class="kpi-sub">Q2 2026 · kvartální období</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label">Čeká na potvrzení</span>
+                        <div class="kpi-icon pending">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">5</div>
+                    <div class="kpi-sub"><span class="highlight">2</span> po termínu</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label">Potvrzeno</span>
+                        <div class="kpi-icon confirmed">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">6</div>
+                    <div class="kpi-sub">50 % dokončeno</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label">Koncept</span>
+                        <div class="kpi-icon draft">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">1</div>
+                    <div class="kpi-sub">Příprava dokumentů</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Balíčky entit</h2>
+                        <p class="card-subtitle">Dokumenty k potvrzení za období Q2 2026 (01.04. – 30.06.)</p>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Export
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active">Všechny <span class="tab-count">12</span></button>
+                    <button class="tab">Čekající <span class="tab-count">5</span></button>
+                    <button class="tab">Potvrzené <span class="tab-count">6</span></button>
+                    <button class="tab">Koncept <span class="tab-count">1</span></button>
+                </div>
+
+                <div class="table-toolbar">
+                    <div class="search-box">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity="0.4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" placeholder="Hledat entitu, osobu…">
+                    </div>
+                    <button class="btn btn-ghost btn-sm">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                        Filtry
+                    </button>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Stav
+                                    <svg class="filter-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                                </th>
+                                <th>Entita
+                                    <svg class="filter-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                                </th>
+                                <th>Dokumenty</th>
+                                <th>Zodpovědná osoba
+                                    <svg class="filter-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                                </th>
+                                <th>Termín</th>
+                                <th>Aktualizace</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="selected" onclick="openDetail()">
+                                <td><span class="status-badge status-pending"><span class="status-dot"></span>Čeká</span></td>
+                                <td>
+                                    <div class="entity-cell">
+                                        <div class="entity-avatar">SP</div>
+                                        <div>
+                                            <div class="entity-name">HC Sparta Praha</div>
+                                            <div class="entity-id">ID 101</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="doc-progress">
+                                        <div class="doc-bar"><div class="doc-bar-fill" style="width: 75%"></div></div>
+                                        <span class="doc-count">3/4</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="person-chip">
+                                        <span class="person-chip-avatar">KG</span>
+                                        Karel Gott
+                                    </span>
+                                </td>
+                                <td>20.06.2026</td>
+                                <td>11.06.2026 10:59</td>
+                                <td><button class="btn btn-ghost btn-sm btn-icon">›</button></td>
+                            </tr>
+                            <tr onclick="openDetail()">
+                                <td><span class="status-badge status-pending"><span class="status-dot"></span>Čeká</span></td>
+                                <td>
+                                    <div class="entity-cell">
+                                        <div class="entity-avatar">PP</div>
+                                        <div>
+                                            <div class="entity-name">HC Slavia Praha</div>
+                                            <div class="entity-id">ID 102</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="doc-progress">
+                                        <div class="doc-bar"><div class="doc-bar-fill" style="width: 100%"></div></div>
+                                        <span class="doc-count">5/5</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="person-chip">
+                                        <span class="person-chip-avatar">JN</span>
+                                        Jan Novák
+                                    </span>
+                                </td>
+                                <td style="color: var(--danger); font-weight: 600;">15.06.2026 ⚠</td>
+                                <td>10.06.2026 14:22</td>
+                                <td><button class="btn btn-ghost btn-sm btn-icon">›</button></td>
+                            </tr>
+                            <tr onclick="openDetail()">
+                                <td><span class="status-badge status-confirmed"><span class="status-dot"></span>Potvrzeno</span></td>
+                                <td>
+                                    <div class="entity-cell">
+                                        <div class="entity-avatar">HB</div>
+                                        <div>
+                                            <div class="entity-name">HC Oceláři Třinec</div>
+                                            <div class="entity-id">ID 103</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="doc-progress">
+                                        <div class="doc-bar"><div class="doc-bar-fill" style="width: 100%"></div></div>
+                                        <span class="doc-count">3/3</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="person-chip">
+                                        <span class="person-chip-avatar">MV</span>
+                                        Marie Veselá
+                                    </span>
+                                </td>
+                                <td>18.06.2026</td>
+                                <td>09.06.2026 08:15</td>
+                                <td><button class="btn btn-ghost btn-sm btn-icon">›</button></td>
+                            </tr>
+                            <tr onclick="openDetail()">
+                                <td><span class="status-badge status-draft"><span class="status-dot"></span>Koncept</span></td>
+                                <td>
+                                    <div class="entity-cell">
+                                        <div class="entity-avatar">CS</div>
+                                        <div>
+                                            <div class="entity-name">HC Kometa Brno</div>
+                                            <div class="entity-id">ID 104</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="doc-progress">
+                                        <div class="doc-bar"><div class="doc-bar-fill" style="width: 25%"></div></div>
+                                        <span class="doc-count">1/4</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="person-chip">
+                                        <span class="person-chip-avatar">—</span>
+                                        Nepřiřazeno
+                                    </span>
+                                </td>
+                                <td>25.06.2026</td>
+                                <td>12.06.2026 09:30</td>
+                                <td><button class="btn btn-ghost btn-sm btn-icon">›</button></td>
+                            </tr>
+                            <tr onclick="openDetail()">
+                                <td><span class="status-badge status-rejected"><span class="status-dot"></span>Odmítnuto</span></td>
+                                <td>
+                                    <div class="entity-cell">
+                                        <div class="entity-avatar">AG</div>
+                                        <div>
+                                            <div class="entity-name">HC Energie Karlovy Vary</div>
+                                            <div class="entity-id">ID 105</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="doc-progress">
+                                        <div class="doc-bar"><div class="doc-bar-fill" style="width: 60%"></div></div>
+                                        <span class="doc-count">3/5</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="person-chip">
+                                        <span class="person-chip-avatar">PH</span>
+                                        Petr Horák
+                                    </span>
+                                </td>
+                                <td>12.06.2026</td>
+                                <td>08.06.2026 16:45</td>
+                                <td><button class="btn btn-ghost btn-sm btn-icon">›</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-footer">
+                    <span>Zobrazeno 1–5 z 12 záznamů</span>
+                    <div class="pagination">
+                        <button>‹</button>
+                        <button class="active">1</button>
+                        <button>2</button>
+                        <button>3</button>
+                        <button>›</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── BUDGETS ─── -->
+        <div class="section-view" id="section-budgets">
+            <div class="page-header">
+                <div class="page-header-left">
+                    <div class="breadcrumb">
+                        <span>Folio</span>
+                        <span class="breadcrumb-sep">›</span>
+                        <span>Budgets</span>
+                    </div>
+                    <h1>Budgets</h1>
+                </div>
+                <div class="page-header-right">
+                    <div class="period-selector">
+                        <div class="period-nav">
+                            <button class="period-nav-btn" aria-label="Předchozí">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                            </button>
+                            <span class="period-label">06 / 2026</span>
+                            <button class="period-nav-btn" aria-label="Další">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                            </button>
+                        </div>
+                        <button class="period-btn">04/2026</button>
+                        <button class="period-btn">05/2026</button>
+                        <button class="period-btn active">06/2026</button>
+                        <button class="period-btn">07/2026</button>
+                    </div>
+                    <button class="btn btn-primary">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Nový balíček
+                    </button>
+                </div>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label">Celkem entit</span>
+                        <div class="kpi-icon total">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">8</div>
+                    <div class="kpi-sub">Červen 2026 · měsíční období</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label">Čeká na potvrzení</span>
+                        <div class="kpi-icon pending">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">3</div>
+                    <div class="kpi-sub"><span class="highlight">1</span> po termínu</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label">Potvrzeno</span>
+                        <div class="kpi-icon confirmed">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">4</div>
+                    <div class="kpi-sub">50 % dokončeno</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label">Koncept</span>
+                        <div class="kpi-icon draft">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">1</div>
+                    <div class="kpi-sub">Příprava dokumentů</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Rozpočtové balíčky</h2>
+                        <p class="card-subtitle">Měsíční reporting za období 06/2026</p>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active">Všechny <span class="tab-count">8</span></button>
+                    <button class="tab">Čekající <span class="tab-count">3</span></button>
+                    <button class="tab">Potvrzené <span class="tab-count">4</span></button>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Stav</th>
+                                <th>Entita</th>
+                                <th>Dokumenty</th>
+                                <th>Zodpovědná osoba</th>
+                                <th>Termín</th>
+                                <th>Aktualizace</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr onclick="openDetail()">
+                                <td><span class="status-badge status-pending"><span class="status-dot"></span>Čeká</span></td>
+                                <td>
+                                    <div class="entity-cell">
+                                        <div class="entity-avatar">TV</div>
+                                        <div>
+                                            <div class="entity-name">HC Verva Litvínov</div>
+                                            <div class="entity-id">ID 109</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="doc-progress">
+                                        <div class="doc-bar"><div class="doc-bar-fill" style="width: 66%"></div></div>
+                                        <span class="doc-count">2/3</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="person-chip">
+                                        <span class="person-chip-avatar">EK</span>
+                                        Eva Králová
+                                    </span>
+                                </td>
+                                <td>15.06.2026</td>
+                                <td>11.06.2026 11:20</td>
+                                <td><button class="btn btn-ghost btn-sm btn-icon">›</button></td>
+                            </tr>
+                            <tr onclick="openDetail()">
+                                <td><span class="status-badge status-confirmed"><span class="status-dot"></span>Potvrzeno</span></td>
+                                <td>
+                                    <div class="entity-cell">
+                                        <div class="entity-avatar">SK</div>
+                                        <div>
+                                            <div class="entity-name">Skoda Auto a.s.</div>
+                                            <div class="entity-id">ID 550</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="doc-progress">
+                                        <div class="doc-bar"><div class="doc-bar-fill" style="width: 100%"></div></div>
+                                        <span class="doc-count">2/2</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="person-chip">
+                                        <span class="person-chip-avatar">TD</span>
+                                        Ondřej Dvořák
+                                    </span>
+                                </td>
+                                <td>10.06.2026</td>
+                                <td>09.06.2026 15:00</td>
+                                <td><button class="btn btn-ghost btn-sm btn-icon">›</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-footer">
+                    <span>Zobrazeno 1–2 z 8 záznamů</span>
+                    <div class="pagination">
+                        <button>‹</button>
+                        <button class="active">1</button>
+                        <button>2</button>
+                        <button>›</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Periods by year ─── -->
+        <div class="section-view" id="section-annual">
+            <div class="page-header">
+                <div class="page-header-left">
+                    <div class="breadcrumb">
+                        <span>Folio</span>
+                        <span class="breadcrumb-sep">›</span>
+                        <span>Roční období</span>
+                    </div>
+                    <h1>Roční období</h1>
+                </div>
+                <div class="page-header-right">
+                    <div class="period-selector">
+                        <div class="period-nav">
+                            <button class="period-nav-btn" aria-label="Předchozí">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                            </button>
+                            <span class="period-label">2025</span>
+                            <button class="period-nav-btn" aria-label="Další">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                            </button>
+                        </div>
+                        <button class="period-btn">2023</button>
+                        <button class="period-btn">2024</button>
+                        <button class="period-btn active">2025</button>
+                        <button class="period-btn">2026</button>
+                    </div>
+                    <button class="btn btn-primary">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Nový balíček
+                    </button>
+                </div>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label">Celkem entit</span>
+                        <div class="kpi-icon total">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">15</div>
+                    <div class="kpi-sub">Rok 2025 · roční období</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label">Čeká na potvrzení</span>
+                        <div class="kpi-icon pending">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">2</div>
+                    <div class="kpi-sub">Termín: 31.03.2026</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label">Potvrzeno</span>
+                        <div class="kpi-icon confirmed">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">13</div>
+                    <div class="kpi-sub">87 % dokončeno</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label">Koncept</span>
+                        <div class="kpi-icon draft">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">0</div>
+                    <div class="kpi-sub">Všechny balíčky odeslány</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Roční balíčky</h2>
+                        <p class="card-subtitle">Roční reporting za období 2025</p>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Stav</th>
+                                <th>Entita</th>
+                                <th>Dokumenty</th>
+                                <th>Zodpovědná osoba</th>
+                                <th>Termín</th>
+                                <th>Aktualizace</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr onclick="openDetail()">
+                                <td><span class="status-badge status-pending"><span class="status-dot"></span>Čeká</span></td>
+                                <td>
+                                    <div class="entity-cell">
+                                        <div class="entity-avatar">CE</div>
+                                        <div>
+                                            <div class="entity-name">CEZ a.s.</div>
+                                            <div class="entity-id">ID 100</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="doc-progress">
+                                        <div class="doc-bar"><div class="doc-bar-fill" style="width: 80%"></div></div>
+                                        <span class="doc-count">8/10</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="person-chip">
+                                        <span class="person-chip-avatar">JS</span>
+                                        Jiří Svoboda
+                                    </span>
+                                </td>
+                                <td>31.03.2026</td>
+                                <td>05.06.2026 09:00</td>
+                                <td><button class="btn btn-ghost btn-sm btn-icon">›</button></td>
+                            </tr>
+                            <tr onclick="openDetail()">
+                                <td><span class="status-badge status-confirmed"><span class="status-dot"></span>Potvrzeno</span></td>
+                                <td>
+                                    <div class="entity-cell">
+                                        <div class="entity-avatar">ER</div>
+                                        <div>
+                                            <div class="entity-name">HC Vítkovice Ridera</div>
+                                            <div class="entity-id">ID 42</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="doc-progress">
+                                        <div class="doc-bar"><div class="doc-bar-fill" style="width: 100%"></div></div>
+                                        <span class="doc-count">12/12</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="person-chip">
+                                        <span class="person-chip-avatar">AB</span>
+                                        Anna Bauer
+                                    </span>
+                                </td>
+                                <td>31.03.2026</td>
+                                <td>28.02.2026 17:30</td>
+                                <td><button class="btn btn-ghost btn-sm btn-icon">›</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── ADMIN ─── -->
+        <div class="section-view" id="section-admin">
+            <div class="page-header">
+                <div class="page-header-left">
+                    <div class="breadcrumb">
+                        <span>Folio</span>
+                        <span class="breadcrumb-sep">›</span>
+                        <span>Administrace</span>
+                    </div>
+                    <h1>Administrace</h1>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Správa období</h2>
+                        <p class="card-subtitle">Období zadávají pracovníci Regula v rámci jednotlivých typů potvrzení</p>
+                    </div>
+                    <span class="admin-only">Pouze admin</span>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active">Přestupy (kvartální)</button>
+                    <button class="tab">Rozpočty (měsíční)</button>
+                    <button class="tab">Roční</button>
+                </div>
+
+                <div style="padding: 22px;">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Období</th>
+                                    <th>Rozsah</th>
+                                    <th>Termín potvrzení</th>
+                                    <th>Stav</th>
+                                    <th>Entit</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Q2 2026</strong></td>
+                                    <td>01.04.2026 – 30.06.2026</td>
+                                    <td>20.06.2026</td>
+                                    <td><span class="status-badge status-pending"><span class="status-dot"></span>Aktivní</span></td>
+                                    <td>12</td>
+                                    <td><button class="btn btn-ghost btn-sm">Upravit</button></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Q1 2026</strong></td>
+                                    <td>01.01.2026 – 31.03.2026</td>
+                                    <td>20.03.2026</td>
+                                    <td><span class="status-badge status-confirmed"><span class="status-dot"></span>Uzavřeno</span></td>
+                                    <td>12</td>
+                                    <td><button class="btn btn-ghost btn-sm">Upravit</button></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Q3 2026</strong></td>
+                                    <td>01.07.2026 – 30.09.2026</td>
+                                    <td>20.09.2026</td>
+                                    <td><span class="status-badge status-draft"><span class="status-dot"></span>Připravuje se</span></td>
+                                    <td>—</td>
+                                    <td><button class="btn btn-ghost btn-sm">Upravit</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-primary btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Přidat období
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Entity a sdílené složky</h2>
+                        <p class="card-subtitle">Propojení entit se zdroji dokumentů ze sdílených složek</p>
+                    </div>
+                </div>
+                <div style="padding: 22px;">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Entita</th>
+                                    <th>Typ potvrzení</th>
+                                    <th>Sdílená složka</th>
+                                    <th>Počet dokumentů</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="entity-cell">
+                                            <div class="entity-avatar">SP</div>
+                                            <div><div class="entity-name">HC Sparta Praha</div></div>
+                                        </div>
+                                    </td>
+                                    <td>Player transfers</td>
+                                    <td><code style="font-size: 12px; color: var(--text-muted);">\\share\folio\transfers\sparta</code></td>
+                                    <td>4</td>
+                                    <td><button class="btn btn-ghost btn-sm">Upravit</button></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="entity-cell">
+                                            <div class="entity-avatar">PP</div>
+                                            <div><div class="entity-name">HC Slavia Praha</div></div>
+                                        </div>
+                                    </td>
+                                    <td>Player transfers</td>
+                                    <td><code style="font-size: 12px; color: var(--text-muted);">\\share\folio\transfers\slavia</code></td>
+                                    <td>5</td>
+                                    <td><button class="btn btn-ghost btn-sm">Upravit</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ═══════════════════ DETAIL PANEL ═══════════════════ -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail()"></div>
+<aside class="detail-panel" id="detailPanel">
+    <div class="detail-header">
+        <div>
+            <h2>HC Sparta Praha</h2>
+            <p>Player transfers · Q2 2026 · ID 101</p>
+        </div>
+        <button class="btn btn-ghost btn-icon" onclick="closeDetail()" aria-label="Zavřít">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+
+    <div class="detail-body">
+        <!-- Workflow -->
+        <div class="detail-section">
+            <div class="detail-section-title">Průběh potvrzení</div>
+            <div class="workflow-steps">
+                <div class="workflow-step done">
+                    <div class="step-circle">✓</div>
+                    <div class="step-label">Nahrání</div>
+                </div>
+                <div class="workflow-step done">
+                    <div class="step-circle">✓</div>
+                    <div class="step-label">Přiřazení</div>
+                </div>
+                <div class="workflow-step active">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Podpis</div>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-circle">4</div>
+                    <div class="step-label">Potvrzení</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div class="detail-section">
+            <div class="detail-section-title">Stav</div>
+            <span class="status-badge status-pending"><span class="status-dot"></span>Čeká na podpis a potvrzení</span>
+        </div>
+
+        <!-- Documents -->
+        <div class="detail-section">
+            <div class="detail-section-title">Dokumenty (3/4 nahráno)</div>
+            <div class="doc-list">
+                <div class="doc-item">
+                    <div class="doc-item-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div class="doc-item-info">
+                        <div class="doc-item-name">Transfer_Report_Q2_2026.xlsx</div>
+                        <div class="doc-item-meta">Ze sdílené složky · 2.4 MB · 10.06.2026</div>
+                    </div>
+                    <div class="doc-item-actions">
+                        <button class="btn-ghost" title="Stáhnout">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="doc-item">
+                    <div class="doc-item-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div class="doc-item-info">
+                        <div class="doc-item-name">Transfer_Confirmation_Signed.pdf</div>
+                        <div class="doc-item-meta">Podepsáno · 856 KB · 11.06.2026</div>
+                    </div>
+                    <div class="doc-item-actions">
+                        <button class="btn-ghost" title="Stáhnout">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="doc-item">
+                    <div class="doc-item-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div class="doc-item-info">
+                        <div class="doc-item-name">Supporting_Data_Q2.pdf</div>
+                        <div class="doc-item-meta">Nahráno regulátorem · 1.1 MB · 10.06.2026</div>
+                    </div>
+                    <div class="doc-item-actions">
+                        <button class="btn-ghost" title="Stáhnout">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="doc-item" style="border-style: dashed; opacity: 0.7;">
+                    <div class="doc-item-icon" style="background: var(--surface); color: var(--text-muted);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </div>
+                    <div class="doc-item-info">
+                        <div class="doc-item-name" style="color: var(--text-muted);">Management_Letter.pdf — chybí</div>
+                        <div class="doc-item-meta">Očekává se ze sdílené složky</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload zone for signed docs -->
+        <div class="detail-section">
+            <div class="detail-section-title">Nahrát podepsanou verzi</div>
+            <div class="upload-zone">
+                <div class="upload-zone-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <p>Přetáhněte soubor sem nebo klikněte pro výběr</p>
+                <span>PDF, XLSX · max. 25 MB</span>
+            </div>
+        </div>
+
+        <!-- Responsible persons -->
+        <div class="detail-section">
+            <div class="detail-section-title">Zodpovědné osoby</div>
+            <div class="person-list">
+                <div class="person-row">
+                    <div class="person-row-avatar">KG</div>
+                    <div class="person-row-info">
+                        <div class="person-row-name">Karel Gott</div>
+                        <div class="person-row-email">karel.gott@example.com · Schvalovatel</div>
+                    </div>
+                    <span class="status-badge status-pending" style="font-size: 11px;"><span class="status-dot"></span>Čeká</span>
+                </div>
+                <div class="person-row">
+                    <div class="person-row-avatar">TT</div>
+                    <div class="person-row-info">
+                        <div class="person-row-name">Test Testovič</div>
+                        <div class="person-row-email">jan.novak@example.com · Regulátor</div>
+                    </div>
+                    <span class="status-badge status-confirmed" style="font-size: 11px;"><span class="status-dot"></span>Hotovo</span>
+                </div>
+            </div>
+            <button class="btn btn-secondary btn-sm" style="margin-top: 12px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Přidat osobu
+            </button>
+        </div>
+
+        <!-- Actions -->
+        <div class="detail-section" style="display: flex; gap: 10px; padding-top: 8px;">
+            <button class="btn btn-primary" style="flex: 1;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Potvrdit
+            </button>
+            <button class="btn btn-secondary" style="flex: 1;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                Odmítnout
+            </button>
+        </div>
+    </div>
+</aside>
+
+<script>
+/* Sidebar toggle */
+const sidebar = document.getElementById('sidebar');
+const mainContent = document.getElementById('mainContent');
+const menuToggle = document.getElementById('menuToggle');
+
+menuToggle.addEventListener('click', () => {
+    if (window.innerWidth <= 768) {
+        sidebar.classList.toggle('open');
+    } else {
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+});
+
+/* Section navigation */
+document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+    item.addEventListener('click', () => {
+        const section = item.dataset.section;
+
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+
+        document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
+        document.getElementById('section-' + section).classList.add('active');
+
+        if (window.innerWidth <= 768) {
+            sidebar.classList.remove('open');
+        }
+    });
+});
+
+/* Period buttons */
+document.querySelectorAll('.period-selector').forEach(selector => {
+    selector.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selector.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const label = selector.querySelector('.period-label');
+            if (label) label.textContent = btn.textContent;
+        });
+    });
+});
+
+/* Tabs */
+document.querySelectorAll('.tabs').forEach(tabBar => {
+    tabBar.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabBar.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+        });
+    });
+});
+
+/* Detail panel */
+function openDetail() {
+    document.getElementById('detailOverlay').classList.add('open');
+    document.getElementById('detailPanel').classList.add('open');
+}
+
+function closeDetail() {
+    document.getElementById('detailOverlay').classList.remove('open');
+    document.getElementById('detailPanel').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeDetail();
+});
+</script>
+
+</body>
+</html>

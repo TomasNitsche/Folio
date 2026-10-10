@@ -1,0 +1,239 @@
+@using Folio.Application.DTOs.Periods
+@using Folio.Domain.Enums
+@inject FolioApiClient Api
+
+@if (Visible)
+{
+    <div class="modal-overlay open" @onclick="Close"></div>
+    <div class="modal-dialog modal-dialog-wide open">
+        <div class="modal-header">
+            <div>
+                <h2>Open new period</h2>
+                <p>Fetch entities from Registry and select clubs to include in the snapshot.</p>
+            </div>
+            <button class="btn btn-ghost btn-icon" @onclick="Close">✕</button>
+        </div>
+
+        <div class="modal-body">
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <div class="alert alert-error">@_error</div>
+            }
+
+            <div class="form-grid">
+                <div class="form-field">
+                    <label>Period code</label>
+                    <input type="text" @bind="_code" placeholder="e.g. 2026M08" />
+                </div>
+                <div class="form-field">
+                    <label>Snapshot date</label>
+                    <input type="date" @bind="_snapshotDate" />
+                </div>
+                <div class="form-field">
+                    <label>Start date</label>
+                    <input type="date" @bind="_startDate" />
+                </div>
+                <div class="form-field">
+                    <label>End date</label>
+                    <input type="date" @bind="_endDate" />
+                </div>
+            </div>
+
+            <div class="entity-picker-section">
+                <div class="entity-picker-header">
+                    <div>
+                        <div class="detail-section-title">Registry entities</div>
+                        <p class="entity-picker-subtitle">Load the catalog for the snapshot date, then select clubs.</p>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" @onclick="LoadRegistryEntities" disabled="@_loadingRegistry">
+                        @(_loadingRegistry ? "Loading…" : "Load from Registry")
+                    </button>
+                </div>
+
+                @if (_registryEntities.Count > 0)
+                {
+                    <div class="entity-picker">
+                        <div class="entity-picker-toolbar">
+                            <input class="entity-picker-search"
+                                   type="search"
+                                   placeholder="Search by name, code, or ID…"
+                                   @bind="_search"
+                                   @bind:event="oninput" />
+                            <label class="entity-select-all-inline">
+                                <input type="checkbox" checked="@_selectAll" @onchange="ToggleSelectAll" />
+                                <span>Select all visible (@FilteredEntities.Count)</span>
+                            </label>
+                            <span class="entity-picker-count">@_selectedIds.Count selected</span>
+                        </div>
+
+                        <div class="entity-select-list">
+                            @foreach (var entity in FilteredEntities)
+                            {
+                                var isSelected = _selectedIds.Contains(entity.Id);
+                                <label class="entity-select-row @(isSelected ? "selected" : "")">
+                                    <input type="checkbox" checked="@isSelected"
+                                           @onchange="e => ToggleEntity(entity.Id, (bool)e.Value!)" />
+                                    <div class="entity-avatar">@entity.Code[..Math.Min(2, entity.Code.Length)]</div>
+                                    <div class="entity-select-content">
+                                        <div class="entity-name">@entity.Name</div>
+                                        <div class="entity-id">@entity.Code · ID @entity.Id</div>
+                                    </div>
+                                </label>
+                            }
+
+                            @if (FilteredEntities.Count == 0)
+                            {
+                                <div class="entity-picker-empty">No entities match your search.</div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-secondary" @onclick="Close">Cancel</button>
+            <button class="btn btn-primary" @onclick="Submit" disabled="@(_submitting || _selectedIds.Count == 0)">
+                @(_submitting ? "Opening…" : $"Open period ({_selectedIds.Count} entities)")
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public ConfirmationTypeKind ConfirmationType { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<PeriodDto> OnPeriodOpened { get; set; }
+
+    private string _code = "";
+    private DateTime _snapshotDate = DateTime.Today;
+    private DateTime _startDate = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateTime _endDate = new(DateTime.Today.Year, DateTime.Today.Month, DateTime.DaysInMonth(DateTime.Today.Year, DateTime.Today.Month));
+    private List<RegistryEntityDto> _registryEntities = [];
+    private HashSet<int> _selectedIds = [];
+    private string _search = "";
+    private bool _selectAll;
+    private bool _loadingRegistry;
+    private bool _submitting;
+    private string? _error;
+
+    private List<RegistryEntityDto> FilteredEntities
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_search))
+                return _registryEntities;
+
+            return _registryEntities.Where(e =>
+                e.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+                e.Code.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+                e.Id.ToString().Contains(_search, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Visible && string.IsNullOrEmpty(_code))
+            _code = SuggestPeriodCode();
+    }
+
+    private string SuggestPeriodCode() => ConfirmationType switch
+    {
+        ConfirmationTypeKind.Annual => DateTime.Today.Year.ToString(),
+        _ => $"{DateTime.Today:yyyy}M{DateTime.Today.Month:D2}"
+    };
+
+    private async Task LoadRegistryEntities()
+    {
+        _loadingRegistry = true;
+        _error = null;
+        try
+        {
+            _registryEntities = (await Api.GetRegistryEntitiesAsync(DateOnly.FromDateTime(_snapshotDate))).ToList();
+            _selectedIds = _registryEntities.Select(e => e.Id).ToHashSet();
+            _selectAll = true;
+            _search = "";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loadingRegistry = false;
+        }
+    }
+
+    private void ToggleSelectAll(ChangeEventArgs e)
+    {
+        _selectAll = (bool)e.Value!;
+        if (_selectAll)
+        {
+            foreach (var entity in FilteredEntities)
+                _selectedIds.Add(entity.Id);
+        }
+        else
+        {
+            foreach (var entity in FilteredEntities)
+                _selectedIds.Remove(entity.Id);
+        }
+
+        _selectAll = FilteredEntities.All(e => _selectedIds.Contains(e.Id));
+    }
+
+    private void ToggleEntity(int id, bool selected)
+    {
+        if (selected) _selectedIds.Add(id);
+        else _selectedIds.Remove(id);
+        _selectAll = FilteredEntities.Any() && FilteredEntities.All(e => _selectedIds.Contains(e.Id));
+    }
+
+    private async Task Submit()
+    {
+        _submitting = true;
+        _error = null;
+        try
+        {
+            var request = new OpenPeriodRequest(
+                ConfirmationType,
+                _code,
+                DateOnly.FromDateTime(_startDate),
+                DateOnly.FromDateTime(_endDate),
+                DateOnly.FromDateTime(_snapshotDate),
+                Api.CurrentUserName,
+                _selectedIds.ToList());
+
+            var period = await Api.OpenPeriodAsync(request);
+            if (period is not null)
+            {
+                await OnPeriodOpened.InvokeAsync(period);
+                Reset();
+                await OnClose.InvokeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    private async Task Close()
+    {
+        Reset();
+        await OnClose.InvokeAsync();
+    }
+
+    private void Reset()
+    {
+        _registryEntities = [];
+        _selectedIds = [];
+        _search = "";
+        _error = null;
+        _selectAll = false;
+    }
+}

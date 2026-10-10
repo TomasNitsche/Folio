@@ -1,0 +1,256 @@
+@using Folio.Application
+@using Folio.Application.DTOs.Packages
+@using Folio.Application.DTOs.Periods
+@using Folio.Domain.Enums
+@inject FolioApiClient Api
+@inject CurrentUserOptions CurrentUser
+
+<ConfirmationDashboard Title="@Title"
+                       GridTitle="@GridTitle"
+                       GridSubtitle="@GridSubtitle"
+                       PeriodGranularityLabel="@PeriodGranularityLabel"
+                       PeriodCodes="@_periodCodes"
+                       SelectedPeriodCode="@_selectedCode"
+                       DefaultPeriodCode="@_defaultPeriodCode"
+                       OnPeriodSelected="SelectPeriod"
+                       Summary="@_summary"
+                       Rows="@_rows"
+                       OnRowSelected="ShowDetail"
+                       EnableSelection="@_canBulkUpload"
+                       SelectedEntityIds="@_selectedEntityIds"
+                       SelectedEntityIdsChanged="OnSelectionChanged">
+    <HeaderActions>
+        @if (_canBulkUpload && _selectedEntityIds.Count > 0)
+        {
+            <button class="btn btn-secondary btn-sm" @onclick="() => _showBulkUpload = true">
+                Bulk upload (@_selectedEntityIds.Count)
+            </button>
+        }
+        @if (_canSetDefaultPeriod && _selectedPeriod is not null && !_selectedPeriod.IsDefault)
+        {
+            <button class="btn btn-secondary btn-sm" @onclick="SetSelectedPeriodAsDefault" disabled="@_busy">
+                Set @_selectedCode as default
+            </button>
+        }
+        @if (_canOpenPeriod)
+        {
+            <button class="btn btn-primary" @onclick="() => _showOpenDialog = true">+ Open period</button>
+        }
+    </HeaderActions>
+    <Notice>
+        @if (_selectedPeriod is not null && _selectedPeriod.IsDefault)
+        {
+            <div class="alert alert-info">
+                <strong>@_selectedCode</strong> is the period currently being collected.
+            </div>
+        }
+        else if (_selectedPeriod is not null && _defaultPeriodCode is not null && _isCompanyUser)
+        {
+            <div class="alert alert-info">
+                <strong>@_selectedCode</strong> is read-only for you — the reporting team is currently collecting
+                <strong>@_defaultPeriodCode</strong>.
+            </div>
+        }
+    </Notice>
+</ConfirmationDashboard>
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <div class="alert alert-error" style="margin-top:16px">@_error</div>
+}
+
+<OpenPeriodDialog Visible="@_showOpenDialog"
+                  ConfirmationType="@ConfirmationType"
+                  OnClose="() => _showOpenDialog = false"
+                  OnPeriodOpened="OnPeriodOpened" />
+
+<BulkUploadDialog Visible="@_showBulkUpload"
+                  PeriodId="@(_selectedPeriodId ?? Guid.Empty)"
+                  PeriodEntityIds="@_selectedEntityIds.ToList()"
+                   OnClose="() => _showBulkUpload = false"
+                   OnUploaded="OnBulkUploaded" />
+
+<EntityDetailPanel Row="@_selectedRow"
+                   PeriodCode="@_selectedCode"
+                   ConfirmationTypeName="@Title"
+                   PeriodAcceptsCompanyInput="@_periodAcceptsCompanyInput"
+                   DefaultPeriodCode="@_defaultPeriodCode"
+                   OnClose="CloseDetail"
+                   OnChanged="LoadDataAsync" />
+
+@if (_loading)
+{
+    <div class="loading-overlay">Loading…</div>
+}
+
+@code {
+    [Parameter, EditorRequired] public ConfirmationTypeKind ConfirmationType { get; set; }
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter, EditorRequired] public string GridTitle { get; set; } = "";
+    [Parameter] public string PeriodGranularityLabel { get; set; } = "monthly period";
+
+    private IReadOnlyList<PeriodDto> _periods = [];
+    private List<string> _periodCodes = [];
+    private string _selectedCode = "";
+    private Guid? _selectedPeriodId;
+    private DashboardSummaryDto? _summary;
+    private IReadOnlyList<PackageGridRowDto> _rows = [];
+    private PackageGridRowDto? _selectedRow;
+    private HashSet<Guid> _selectedEntityIds = [];
+    private bool _showOpenDialog;
+    private bool _showBulkUpload;
+    private bool _loading;
+    private bool _busy;
+    private string? _error;
+
+    private bool _canBulkUpload => RolePermissions.CanUploadStaticDocuments(CurrentUser.AppRole);
+    private bool _canOpenPeriod => RolePermissions.CanOpenPeriod(CurrentUser.AppRole);
+    private bool _canSetDefaultPeriod => RolePermissions.CanOpenPeriod(CurrentUser.AppRole);
+    private bool _isCompanyUser => RolePermissions.IsCompanyRole(CurrentUser.AppRole);
+
+    private PeriodDto? _selectedPeriod => _periods.FirstOrDefault(p => p.Code == _selectedCode);
+    private string? _defaultPeriodCode => _periods.FirstOrDefault(p => p.IsDefault)?.Code;
+
+    /// <summary>Company users only upload into the default period; when none is marked, nothing is locked.</summary>
+    private bool _periodAcceptsCompanyInput =>
+        !_isCompanyUser || _defaultPeriodCode is null || _selectedPeriod?.IsDefault == true;
+
+    private string GridSubtitle => string.IsNullOrEmpty(_selectedCode)
+        ? "Select a period"
+        : $"Packages for period {_selectedCode}";
+
+    protected override async Task OnInitializedAsync() => await LoadPeriodsAsync();
+
+    private Task OnSelectionChanged(HashSet<Guid> ids)
+    {
+        _selectedEntityIds = ids;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnBulkUploaded()
+    {
+        _selectedEntityIds.Clear();
+        await LoadDataAsync();
+    }
+
+    private async Task LoadPeriodsAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _periods = (await Api.GetPeriodsAsync(ConfirmationType)).OrderByDescending(p => p.Code).ToList();
+            _periodCodes = _periods.Select(p => p.Code).ToList();
+
+            if (_periodCodes.Count == 0)
+            {
+                _periods = [];
+                _selectedCode = "";
+                _selectedPeriodId = null;
+                _summary = new DashboardSummaryDto(0, 0, 0, 0, 0);
+                _rows = [];
+                _selectedEntityIds.Clear();
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_selectedCode) || !_periodCodes.Contains(_selectedCode))
+            {
+                // Open on the period the reporting team marked as default, newest one otherwise.
+                _selectedCode = _defaultPeriodCode ?? _periodCodes[0];
+            }
+
+            var period = _periods.First(p => p.Code == _selectedCode);
+            _selectedPeriodId = period.Id;
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            _summary = new DashboardSummaryDto(0, 0, 0, 0, 0);
+            _rows = [];
+            _error = $"Cannot load periods from API ({ex.Message}). Make sure Folio.Api is running.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SelectPeriod(string code)
+    {
+        _error = null;
+        _selectedCode = code;
+        _selectedEntityIds.Clear();
+        try
+        {
+            _periods = (await Api.GetPeriodsAsync(ConfirmationType)).OrderByDescending(p => p.Code).ToList();
+            var period = _periods.FirstOrDefault(p => p.Code == code);
+            _selectedPeriodId = period?.Id;
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            _summary = new DashboardSummaryDto(0, 0, 0, 0, 0);
+            _rows = [];
+            _error = $"Cannot switch period ({ex.Message}).";
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        if (_selectedPeriodId is null)
+        {
+            _summary = new DashboardSummaryDto(0, 0, 0, 0, 0);
+            _rows = [];
+            return;
+        }
+
+        try
+        {
+            _summary = await Api.GetSummaryAsync(_selectedPeriodId.Value);
+            _rows = await Api.GetPackageGridAsync(_selectedPeriodId.Value);
+            _error = null;
+        }
+        catch (Exception ex)
+        {
+            _summary = new DashboardSummaryDto(0, 0, 0, 0, 0);
+            _rows = [];
+            _error = $"Cannot load period data ({ex.Message}).";
+            return;
+        }
+
+        if (_selectedRow is not null)
+        {
+            _selectedRow = _rows.FirstOrDefault(r => r.PeriodEntityId == _selectedRow.PeriodEntityId);
+        }
+    }
+
+    private async Task OnPeriodOpened(PeriodDto period)
+    {
+        _selectedCode = period.Code;
+        _selectedPeriodId = period.Id;
+        await LoadPeriodsAsync();
+    }
+
+    private async Task SetSelectedPeriodAsDefault()
+    {
+        if (_selectedPeriodId is null) return;
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.SetDefaultPeriodAsync(_selectedPeriodId.Value);
+            await LoadPeriodsAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Cannot set default period ({ex.Message}).";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void ShowDetail(PackageGridRowDto row) => _selectedRow = row;
+    private void CloseDetail() => _selectedRow = null;
+}

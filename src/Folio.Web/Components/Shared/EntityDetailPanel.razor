@@ -1,0 +1,454 @@
+@using Folio.Application
+@using Folio.Application.DTOs.Users
+@using Folio.Domain.Enums
+@inject FolioApiClient Api
+@inject CurrentUserOptions CurrentUser
+@inject IJSRuntime Js
+
+<div class="detail-overlay @(_visible ? "open" : "")" @onclick="Close"></div>
+<aside class="detail-panel @(_visible ? "open" : "")">
+    @if (Row is not null)
+    {
+        <div class="detail-header">
+            <div>
+                <h2>@Row.EntityName</h2>
+                <p>@ConfirmationTypeName · @PeriodCode · ID @Row.RegistryEntityId</p>
+            </div>
+            <button class="btn btn-ghost btn-icon" @onclick="Close">✕</button>
+        </div>
+
+        <div class="detail-body">
+            @if (!string.IsNullOrEmpty(_message))
+            {
+                <div class="alert @(_isError ? "alert-error" : "alert-success")">@_message</div>
+            }
+
+            @if (!PeriodAcceptsCompanyInput)
+            {
+                <div class="alert alert-info">
+                    Read-only — this period is not the one being collected.
+                    @if (!string.IsNullOrEmpty(DefaultPeriodCode))
+                    {
+                        <text>Upload into <strong>@DefaultPeriodCode</strong> instead.</text>
+                    }
+                </div>
+            }
+
+            <div class="detail-section">
+                <div class="detail-section-title">Package</div>
+                <p>
+                    Version <strong>@(Row.HasPackage ? $"v{Row.Version}" : "—")</strong> ·
+                    Final: <strong>@(Row.IsFinal ? "Yes" : "No")</strong> ·
+                    Status: <span class="status-badge @StatusClass"><span class="status-dot"></span>@Row.Status</span>
+                </p>
+                <p class="assignment-help" style="margin-top:8px">
+                    Workflow: static directive → signed confirmation → Excel package (v0, v1, …) → mark final.
+                </p>
+                @if (Row.HasPackage && !Row.IsFinal && CanMarkFinal)
+                {
+                    <button class="btn btn-secondary btn-sm" @onclick="MarkFinal" disabled="@_busy">
+                        Mark version @Row.Version as final
+                    </button>
+                }
+            </div>
+
+            <div class="detail-section">
+                <div class="detail-section-title">Responsible persons</div>
+                @if (CanAssignUsers)
+                {
+                    <p class="assignment-help">
+                        Assign a company <strong>confirmer</strong> (signs documents) and <strong>pack filler</strong> (uploads Excel).
+                    </p>
+                    <div class="assignment-form">
+                        <div class="form-field">
+                            <label>Confirmer</label>
+                            <select @bind="_confirmerUserId">
+                                <option value="">Not assigned</option>
+                                @foreach (var user in _confirmers)
+                                {
+                                    <option value="@user.Id">@user.DisplayName (@user.Email)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Pack filler</label>
+                            <select @bind="_packFillerUserId">
+                                <option value="">Not assigned</option>
+                                @foreach (var user in _packFillers)
+                                {
+                                    <option value="@user.Id">@user.DisplayName (@user.Email)</option>
+                                }
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" @onclick="SaveAssignments" disabled="@_busy">
+                            @(_busy ? "Saving…" : "Save assignments")
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="assignment-summary">
+                        <div class="assignment-summary-row">
+                            <span class="assignment-label">Confirmer</span>
+                            <span>@(_assignments.Confirmer?.DisplayName ?? "Not assigned")</span>
+                        </div>
+                        <div class="assignment-summary-row">
+                            <span class="assignment-label">Pack filler</span>
+                            <span>@(_assignments.PackFiller?.DisplayName ?? "Not assigned")</span>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="detail-section">
+                <div class="detail-section-title">Documents (@Row.DocumentsUploaded/@Row.DocumentsExpected)</div>
+                @if (_documents.Count == 0)
+                {
+                    <p style="color:var(--text-muted);font-size:13px;">No documents uploaded yet.</p>
+                }
+                <div class="doc-list">
+                    @foreach (var doc in OrderedDocuments)
+                    {
+                        <div class="doc-item">
+                            <div class="doc-item-icon">📄</div>
+                            <div class="doc-item-info">
+                                <div class="doc-item-name">@doc.FileName</div>
+                                <div class="doc-item-meta">
+                                    @GetKindLabel(doc.Kind) · @doc.UploadedAt.ToString("dd.MM.yyyy HH:mm") · @doc.UploadedBy
+                                </div>
+                                <div class="doc-item-meta" style="font-family:monospace;font-size:10px;margin-top:4px">
+                                    @doc.StoragePath
+                                </div>
+                            </div>
+                            <button class="btn btn-ghost btn-sm" @onclick="() => DownloadDocument(doc)" disabled="@_busy">Download</button>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (CanUploadStatic && !_hasStaticDocument)
+            {
+                <div class="detail-section">
+                    <div class="detail-section-title">Upload static reference (step 1)</div>
+                    <label class="upload-zone">
+                        <InputFile OnChange="UploadStatic" accept=".pdf,.xlsx,.xls" disabled="@_busy" />
+                        <div class="upload-zone-icon">📋</div>
+                        <p>Directive / acknowledgment form for confirmer</p>
+                        <span>PDF or Excel · one file per entity</span>
+                    </label>
+                </div>
+            }
+
+            @if (CanUploadSigned && !_hasSignedDocument)
+            {
+                <div class="detail-section">
+                    <div class="detail-section-title">Upload signed confirmation (step 2)</div>
+                    <label class="upload-zone">
+                        <InputFile OnChange="UploadSigned" accept=".pdf,.xlsx" disabled="@_busy" />
+                        <div class="upload-zone-icon">✍</div>
+                        <p>Click to upload signed document</p>
+                        <span>PDF or XLSX · max 25 MB</span>
+                    </label>
+                </div>
+            }
+            else if (_hasSignedDocument)
+            {
+                <div class="detail-section">
+                    <div class="detail-section-title">Signed confirmation</div>
+                    <p style="color:var(--text-muted);font-size:13px;">Confirmation already uploaded.</p>
+                </div>
+            }
+
+            @if (CanUploadPackage && !Row.IsFinal)
+            {
+                <div class="detail-section">
+                    <div class="detail-section-title">Upload Excel package @(Row.HasPackage ? $"(next: v{Row.Version + 1})" : "(v0)")</div>
+                    <label class="upload-zone">
+                        <InputFile OnChange="UploadPackage" accept=".xlsx,.xls" disabled="@_busy" />
+                        <div class="upload-zone-icon">↑</div>
+                        <p>Click to upload filled Excel package</p>
+                        <span>Each upload creates a new version — same filename is OK</span>
+                    </label>
+                </div>
+            }
+            else if (Row.IsFinal)
+            {
+                <div class="detail-section">
+                    <div class="detail-section-title">Excel package</div>
+                    <p style="color:var(--text-muted);font-size:13px;">Version @Row.Version is final — no further uploads.</p>
+                </div>
+            }
+        </div>
+    }
+</aside>
+
+@code {
+    [Parameter] public PackageGridRowDto? Row { get; set; }
+    [Parameter] public string PeriodCode { get; set; } = "";
+    [Parameter] public string ConfirmationTypeName { get; set; } = "";
+    /// <summary>False when a company user opened a period other than the one the reporting team is collecting.</summary>
+    [Parameter] public bool PeriodAcceptsCompanyInput { get; set; } = true;
+    [Parameter] public string? DefaultPeriodCode { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private bool _visible;
+    private List<DocumentDto> _documents = [];
+    private EntityAssignmentsDto _assignments = new(null, null);
+    private IReadOnlyList<UserDto> _confirmers = [];
+    private IReadOnlyList<UserDto> _packFillers = [];
+    private string _confirmerUserId = "";
+    private string _packFillerUserId = "";
+    private bool _busy;
+    private string? _message;
+    private bool _isError;
+
+    private bool CanAssignUsers => RolePermissions.CanAssignEntityUsers(CurrentUser.AppRole);
+    private bool CanUploadStatic => RolePermissions.CanUploadStaticDocuments(CurrentUser.AppRole);
+    private bool CanUploadSigned =>
+        RolePermissions.CanUploadSignedAtRoleLevel(CurrentUser.AppRole) && PeriodAcceptsCompanyInput;
+    private bool CanUploadPackage =>
+        RolePermissions.CanUploadPackageAtRoleLevel(CurrentUser.AppRole) && PeriodAcceptsCompanyInput;
+    private bool CanMarkFinal => CanUploadPackage && Row is { HasPackage: true, IsFinal: false };
+    private bool _hasSignedDocument => _documents.Any(d => d.Kind == DocumentKind.SignedConfirmation);
+    private bool _hasStaticDocument => _documents.Any(d => d.Kind == DocumentKind.StaticReference);
+
+    private IEnumerable<DocumentDto> OrderedDocuments => _documents
+        .OrderBy(d => d.Kind switch
+        {
+            DocumentKind.StaticReference => 0,
+            DocumentKind.SignedConfirmation => 1,
+            _ => 2
+        })
+        .ThenByDescending(d => d.PackageVersion ?? -1)
+        .ThenByDescending(d => d.UploadedAt);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _visible = Row is not null;
+        if (Row is not null)
+            await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        if (Row is null) return;
+
+        _message = null;
+        var errors = new List<string>();
+
+        try
+        {
+            _documents = (await Api.GetDocumentsAsync(Row.PeriodEntityId)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _documents = [];
+            errors.Add($"Documents: {ex.Message}");
+        }
+
+        try
+        {
+            _assignments = await Api.GetEntityAssignmentsAsync(Row.PeriodEntityId);
+            _confirmerUserId = _assignments.Confirmer?.UserId.ToString() ?? "";
+            _packFillerUserId = _assignments.PackFiller?.UserId.ToString() ?? "";
+        }
+        catch (Exception ex)
+        {
+            _assignments = new EntityAssignmentsDto(null, null);
+            errors.Add($"Assignments: {ex.Message}");
+        }
+
+        if (CanAssignUsers)
+        {
+            try
+            {
+                var users = await Api.GetUsersAsync();
+                _confirmers = users.Where(u => u.Role == UserRole.Confirmer).ToList();
+                _packFillers = users.Where(u => u.Role == UserRole.PackFiller).ToList();
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"Users: {ex.Message}");
+            }
+        }
+
+        if (errors.Count > 0)
+        {
+            _message = string.Join(" ", errors);
+            _isError = true;
+        }
+    }
+
+    private async Task LoadAssignmentsAsync()
+    {
+        if (Row is null) return;
+        _assignments = await Api.GetEntityAssignmentsAsync(Row.PeriodEntityId);
+        _confirmerUserId = _assignments.Confirmer?.UserId.ToString() ?? "";
+        _packFillerUserId = _assignments.PackFiller?.UserId.ToString() ?? "";
+    }
+
+    private async Task LoadAssignableUsersAsync()
+    {
+        if (!CanAssignUsers) return;
+        var users = await Api.GetUsersAsync();
+        _confirmers = users.Where(u => u.Role == UserRole.Confirmer).ToList();
+        _packFillers = users.Where(u => u.Role == UserRole.PackFiller).ToList();
+    }
+
+    private async Task LoadDocumentsAsync()
+    {
+        if (Row is null) return;
+        _documents = (await Api.GetDocumentsAsync(Row.PeriodEntityId)).ToList();
+    }
+
+    private string StatusClass => Row?.Status switch
+    {
+        PackageStatus.Pending => "status-pending",
+        PackageStatus.Confirmed => "status-confirmed",
+        PackageStatus.Draft => "status-draft",
+        PackageStatus.Rejected => "status-rejected",
+        _ => "status-draft"
+    };
+
+    private static string GetKindLabel(DocumentKind kind) => kind switch
+    {
+        DocumentKind.StaticReference => "Static reference",
+        DocumentKind.SignedConfirmation => "Signed",
+        DocumentKind.ExcelPackage => "Excel package",
+        _ => kind.ToString()
+    };
+
+    private async Task UploadStatic(InputFileChangeEventArgs e)
+    {
+        await UploadFile(e, async (stream, name) =>
+        {
+            await Api.UploadStaticAsync(Row!.PeriodEntityId, stream, name);
+            _message = "Static reference uploaded.";
+        });
+    }
+
+    private async Task UploadPackage(InputFileChangeEventArgs e)
+    {
+        await UploadFile(e, async (stream, name) =>
+        {
+            var package = await Api.UploadPackageAsync(Row!.PeriodEntityId, stream, name);
+            _message = $"Package saved as version v{package.Version}.";
+        });
+    }
+
+    private async Task UploadSigned(InputFileChangeEventArgs e)
+    {
+        await UploadFile(e, async (stream, name) =>
+        {
+            await Api.UploadSignedAsync(Row!.PeriodEntityId, stream, name);
+            _message = "Signed document uploaded.";
+        });
+    }
+
+    private async Task UploadFile(InputFileChangeEventArgs e, Func<Stream, string, Task> action)
+    {
+        if (Row is null || e.FileCount == 0) return;
+        _busy = true;
+        _message = null;
+        try
+        {
+            var file = e.File;
+            await using var stream = file.OpenReadStream(maxAllowedSize: 25 * 1024 * 1024);
+            await action(stream, file.Name);
+            _isError = false;
+            await LoadDocumentsAsync();
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _isError = true;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SaveAssignments()
+    {
+        if (Row is null) return;
+        _busy = true;
+        _message = null;
+        try
+        {
+            Guid? confirmerId = Guid.TryParse(_confirmerUserId, out var c) ? c : null;
+            Guid? packFillerId = Guid.TryParse(_packFillerUserId, out var p) ? p : null;
+
+            await Api.SetEntityAssignmentsAsync(
+                Row.PeriodEntityId,
+                new SetEntityAssignmentsRequest(confirmerId, packFillerId));
+
+            _message = "Assignments saved.";
+            _isError = false;
+            await LoadAssignmentsAsync();
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _isError = true;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task MarkFinal()
+    {
+        if (Row is null) return;
+        _busy = true;
+        try
+        {
+            var package = await Api.MarkPackageFinalAsync(Row.PeriodEntityId);
+            _message = $"Version v{package.Version} marked as final.";
+            _isError = false;
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _isError = true;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadDocument(DocumentDto doc)
+    {
+        if (Row is null) return;
+        _busy = true;
+        _message = null;
+        try
+        {
+            var (content, contentType, fileName) = await Api.DownloadDocumentAsync(Row.PeriodEntityId, doc.Id);
+            var base64 = Convert.ToBase64String(content);
+            await Js.InvokeVoidAsync("folioDownloadFile", fileName, contentType, base64);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _isError = true;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task Close()
+    {
+        _visible = false;
+        _message = null;
+        await OnClose.InvokeAsync();
+    }
+}
