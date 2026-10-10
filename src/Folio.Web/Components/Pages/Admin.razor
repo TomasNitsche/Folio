@@ -1,0 +1,252 @@
+@page "/admin"
+@using Folio.Application
+@using Folio.Domain.Enums
+@inject FolioApiClient Api
+@inject CurrentUserOptions CurrentUser
+
+@if (!_canAccessAdmin)
+{
+    <div class="alert alert-error">Administrator access is required.</div>
+}
+else
+{
+
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="breadcrumb">
+            <span>Folio</span>
+            <span class="breadcrumb-sep">›</span>
+            <span>Administration</span>
+        </div>
+        <h1>Administration</h1>
+    </div>
+    <div class="page-header-right">
+        <button class="btn btn-secondary btn-sm" @onclick="RunSeed" disabled="@_busy">
+            @(_busy ? "Seeding…" : "Re-run dev seed")
+        </button>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_message))
+{
+    <div class="alert @(_isError ? "alert-error" : "alert-success")" style="margin-bottom:16px">@_message</div>
+}
+
+<div class="card" style="margin-bottom:24px">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">Roles & permissions</h2>
+            <p class="card-subtitle">Application roles define what users can see and do</p>
+        </div>
+    </div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Role</th>
+                    <th>Description</th>
+                    <th>Permissions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var role in _roles)
+                {
+                    <tr>
+                        <td><span class="role-badge">@role.Name</span></td>
+                        <td>@role.Description</td>
+                        <td>
+                            <ul class="permission-list">
+                                @foreach (var permission in role.Permissions)
+                                {
+                                    <li>@permission</li>
+                                }
+                            </ul>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom:24px">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">Users</h2>
+            <p class="card-subtitle">Manage users with access to the application</p>
+        </div>
+        <button class="btn btn-primary btn-sm" @onclick="ShowCreateDialog">+ Add user</button>
+    </div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Display name</th>
+                    <th>User name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_users.Count == 0)
+                {
+                    <tr><td colspan="6" style="color:var(--text-muted)">No users — add one or run dev seed</td></tr>
+                }
+                @foreach (var user in _users)
+                {
+                    <tr class="@(user.IsActive ? "" : "row-inactive")">
+                        <td>@user.DisplayName</td>
+                        <td>@user.UserName</td>
+                        <td>@user.Email</td>
+                        <td>@GetRoleName(user.Role)</td>
+                        <td>
+                            <span class="status-badge @(user.IsActive ? "status-confirmed" : "status-draft")">
+                                <span class="status-dot"></span>@(user.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td class="table-actions">
+                            <button class="btn btn-ghost btn-sm" @onclick="() => ShowEditDialog(user)">Edit</button>
+                            @if (user.IsActive)
+                            {
+                                <button class="btn btn-ghost btn-sm" @onclick="() => Deactivate(user)">Deactivate</button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-ghost btn-sm" @onclick="() => Reactivate(user)">Reactivate</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">File storage</h2>
+            <p class="card-subtitle">Uploaded packages and signed documents are saved under this folder</p>
+        </div>
+    </div>
+    <div style="padding:22px">
+        <code>@(_storageRoot ?? "Loading…")</code>
+        <p style="color:var(--text-muted);font-size:13px;margin-top:8px">
+            Structure: <code>{PeriodCode}/{EntityCode}/packages|signed|static/{fileName}</code>
+        </p>
+    </div>
+</div>
+
+<UserEditDialog Visible="_showUserDialog"
+                User="_editingUser"
+                Roles="_roles"
+                OnClose="CloseUserDialog"
+                OnSaved="LoadAsync" />
+}
+
+@code {
+    private IReadOnlyList<UserDto> _users = [];
+    private IReadOnlyList<RoleDefinitionDto> _roles = [];
+    private string? _storageRoot;
+    private bool _busy;
+    private bool _showUserDialog;
+    private UserDto? _editingUser;
+    private string? _message;
+    private bool _isError;
+    private bool _canAccessAdmin => RolePermissions.CanAccessAdmin(CurrentUser.AppRole);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!_canAccessAdmin)
+            return;
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _users = await Api.GetUsersForAdminAsync();
+        _roles = await Api.GetRolesAsync();
+        var storage = await Api.GetStorageInfoAsync();
+        _storageRoot = storage?.RootPath;
+    }
+
+    private void ShowCreateDialog()
+    {
+        _editingUser = null;
+        _showUserDialog = true;
+    }
+
+    private void ShowEditDialog(UserDto user)
+    {
+        _editingUser = user;
+        _showUserDialog = true;
+    }
+
+    private void CloseUserDialog()
+    {
+        _showUserDialog = false;
+        _editingUser = null;
+    }
+
+    private async Task Deactivate(UserDto user)
+    {
+        _message = null;
+        try
+        {
+            await Api.DeactivateUserAsync(user.Id);
+            _message = $"User {user.DisplayName} deactivated.";
+            _isError = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _isError = true;
+        }
+    }
+
+    private async Task Reactivate(UserDto user)
+    {
+        _message = null;
+        try
+        {
+            await Api.ReactivateUserAsync(user.Id);
+            _message = $"User {user.DisplayName} reactivated.";
+            _isError = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _isError = true;
+        }
+    }
+
+    private async Task RunSeed()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var result = await Api.SeedDevDataAsync(includeDemoPeriod: false);
+            _message = result.Message;
+            _isError = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _isError = true;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string GetRoleName(UserRole role) =>
+        _roles.FirstOrDefault(r => r.Role == role)?.Name ?? role.ToString();
+}

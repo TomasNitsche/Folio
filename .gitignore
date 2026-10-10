@@ -1,0 +1,101 @@
+## .NET / Visual Studio
+
+# Build outputs
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# User-specific files
+*.rsuser
+*.user
+*.userosscache
+*.sln.docstates
+*.slnLaunch.user
+
+
+# Visual Studio cache / options files
+.vs/
+*.suo
+*.userprefs
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+coverage*.xml
+coverage*.json
+coverage*.cobertura.xml
+*.coveragexml
+*.coverage
+*.coveragesettings
+
+# Benchmark results
+BenchmarkDotNet.Artifacts/
+
+# .NET publish output
+**/publish/
+**/PublishOutput/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Rider
+.idea/
+*.sln.iml
+
+# Cursor / VS Code
+.cursor/
+.vscode/
+*.code-workspace
+
+# dotnet tools
+.config/dotnet-tools.json.lock
+
+# OS-specific
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Local secrets / connection strings (override in appsettings.Development.json)
+# appsettings.Development.json  # uncomment if you store secrets here
+
+# Azure Functions / WebJobs
+.azurefunctions/
+local.settings.json
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Docker
+docker-compose.override.yml

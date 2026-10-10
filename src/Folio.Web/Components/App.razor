@@ -1,0 +1,28 @@
+﻿@using Folio.Web.Components
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <ResourcePreloader />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="@Assets["folio.css"]" />
+    <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css" />
+    <link rel="stylesheet" href="@Assets["Folio.Web.styles.css"]" />
+    <ImportMap />
+    <HeadOutlet />
+</head>
+
+<body>
+    @* Global interactivity: the layout (sidebar toggle) needs to be interactive too, not only the pages. *@
+    <Routes @rendermode="InteractiveServer" />
+    <ReconnectModal />
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+    <script src="download.js"></script>
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+</body>
+
+</html>

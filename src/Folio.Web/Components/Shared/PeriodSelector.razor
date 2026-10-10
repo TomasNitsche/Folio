@@ -1,0 +1,106 @@
+@if (PeriodCodes.Any())
+{
+    <div class="period-selector" @onclick:stopPropagation="true">
+        <button type="button"
+                class="period-nav-btn"
+                aria-label="Show older periods"
+                disabled="@(!CanScrollToOlder)"
+                @onclick="ScrollToOlder">
+            ‹
+        </button>
+
+        <div class="period-pills-track">
+            @foreach (var periodCode in WindowPeriods)
+            {
+                <button type="button"
+                        class="period-btn @(periodCode == SelectedPeriodCode ? "active" : "")"
+                        title="@(periodCode == DefaultPeriodCode ? "Period currently being collected" : null)"
+                        @onclick="() => SelectPeriod(periodCode)">
+                    @periodCode
+                    @if (periodCode == DefaultPeriodCode)
+                    {
+                        <span class="period-btn-default" aria-label="Default period">●</span>
+                    }
+                </button>
+            }
+        </div>
+
+        <button type="button"
+                class="period-nav-btn"
+                aria-label="Show newer periods"
+                disabled="@(!CanScrollToNewer)"
+                @onclick="ScrollToNewer">
+            ›
+        </button>
+    </div>
+}
+
+@code {
+    private const int VisibleWindowCount = 3;
+
+    [Parameter] public IReadOnlyList<string> PeriodCodes { get; set; } = [];
+    [Parameter] public string SelectedPeriodCode { get; set; } = "";
+    [Parameter] public string? DefaultPeriodCode { get; set; }
+    [Parameter] public EventCallback<string> OnPeriodSelected { get; set; }
+
+    private int _windowStart;
+
+    protected override void OnParametersSet() => AlignWindowToSelection();
+
+    private int SelectedIndex
+    {
+        get
+        {
+            for (var i = 0; i < PeriodCodes.Count; i++)
+            {
+                if (PeriodCodes[i] == SelectedPeriodCode)
+                    return i;
+            }
+
+            return -1;
+        }
+    }
+
+    private bool CanScrollToOlder =>
+        PeriodCodes.Count > VisibleWindowCount && _windowStart + VisibleWindowCount < PeriodCodes.Count;
+
+    private bool CanScrollToNewer => _windowStart > 0;
+
+    private IReadOnlyList<string> WindowPeriods =>
+        PeriodCodes.Skip(_windowStart).Take(VisibleWindowCount).ToList();
+
+    private void AlignWindowToSelection()
+    {
+        var idx = SelectedIndex;
+        if (idx < 0)
+        {
+            _windowStart = 0;
+            return;
+        }
+
+        if (idx < _windowStart)
+            _windowStart = idx;
+        else if (idx >= _windowStart + VisibleWindowCount)
+            _windowStart = Math.Max(0, idx - VisibleWindowCount + 1);
+
+        _windowStart = Math.Min(_windowStart, Math.Max(0, PeriodCodes.Count - VisibleWindowCount));
+    }
+
+    private async Task SelectPeriod(string periodCode)
+    {
+        AlignWindowToSelection();
+        await OnPeriodSelected.InvokeAsync(periodCode);
+    }
+
+    private void ScrollToOlder()
+    {
+        if (!CanScrollToOlder) return;
+        _windowStart++;
+    }
+
+    private void ScrollToNewer()
+    {
+        if (!CanScrollToNewer) return;
+        _windowStart--;
+    }
+}

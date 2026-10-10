@@ -1,0 +1,33 @@
+trigger:
+  branches:
+    include:
+      - master
+      - develop
+      - main
+  paths:
+    exclude:
+      - '*.md'
+      - '**/*.md'
+      - 'docs/*'
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: Release
+
+steps:
+  - task: UseDotNet@2
+    displayName: Install .NET SDK
+    inputs:
+      packageType: sdk
+      version: 10.0.x
+
+  - script: dotnet restore Folio.sln
+    displayName: Restore
+
+  - script: dotnet build Folio.sln --configuration $(buildConfiguration) --no-restore
+    displayName: Build
+
+  - script: dotnet test Folio.sln --configuration $(buildConfiguration) --no-build --verbosity normal
+    displayName: Test

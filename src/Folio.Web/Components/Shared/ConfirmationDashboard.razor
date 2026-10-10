@@ -1,0 +1,210 @@
+@using Folio.Application.DTOs.Packages
+@using Folio.Domain.Enums
+
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="breadcrumb">
+            <span>Folio</span>
+            <span class="breadcrumb-sep">›</span>
+            <span>@Title</span>
+        </div>
+        <h1>@Title</h1>
+    </div>
+    <div class="page-header-right">
+        @if (PeriodCodes.Any())
+        {
+            <PeriodSelector PeriodCodes="@PeriodCodes"
+                            SelectedPeriodCode="@SelectedPeriodCode"
+                            DefaultPeriodCode="@DefaultPeriodCode"
+                            OnPeriodSelected="OnPeriodSelected" />
+        }
+        @HeaderActions
+    </div>
+</div>
+
+@Notice
+
+@if (Summary is not null)
+{
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <span class="kpi-label">Total entities</span>
+                <div class="kpi-icon total">TOT</div>
+            </div>
+            <div class="kpi-value">@Summary.TotalEntities</div>
+            <div class="kpi-sub">@SelectedPeriodCode · @PeriodGranularityLabel</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <span class="kpi-label">Pending</span>
+                <div class="kpi-icon pending">PEN</div>
+            </div>
+            <div class="kpi-value">@Summary.PendingCount</div>
+            <div class="kpi-sub"><span class="highlight">@Summary.OverdueCount</span> overdue</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <span class="kpi-label">Confirmed</span>
+                <div class="kpi-icon confirmed">OK</div>
+            </div>
+            <div class="kpi-value">@Summary.ConfirmedCount</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-card-header">
+                <span class="kpi-label">Draft</span>
+                <div class="kpi-icon draft">DRF</div>
+            </div>
+            <div class="kpi-value">@Summary.DraftCount</div>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">@GridTitle</h2>
+            <p class="card-subtitle">@GridSubtitle</p>
+        </div>
+        @if (EnableSelection && SelectedEntityIds.Count > 0)
+        {
+            <span class="entity-picker-count">@SelectedEntityIds.Count selected</span>
+        }
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    @if (EnableSelection)
+                    {
+                        <th class="col-select">
+                            <input type="checkbox"
+                                   checked="@_selectAllVisible"
+                                   @onchange="ToggleSelectAllVisible" />
+                        </th>
+                    }
+                    <th>Status</th>
+                    <th>Entity</th>
+                    <th>Version</th>
+                    <th>Final</th>
+                    <th>Documents</th>
+                    <th>Responsible</th>
+                    <th>Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Rows.Any())
+                {
+                    <tr>
+                        <td colspan="@(EnableSelection ? 8 : 7)">
+                            <div class="empty-state">
+                                <h3>No packages yet</h3>
+                                <p>Open a period and add entities to get started.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @foreach (var row in Rows)
+                {
+                    var isSelected = SelectedEntityIds.Contains(row.PeriodEntityId);
+                    <tr class="@(isSelected ? "row-selected" : "")" @onclick="() => OnRowSelected.InvokeAsync(row)" style="cursor:pointer">
+                        @if (EnableSelection)
+                        {
+                            <td class="col-select" @onclick:stopPropagation="true">
+                                <input type="checkbox"
+                                       checked="@isSelected"
+                                       @onchange="e => ToggleRow(row.PeriodEntityId, (bool)e.Value!)" />
+                            </td>
+                        }
+                        <td><span class="status-badge @GetStatusClass(row.Status)"><span class="status-dot"></span>@GetStatusLabel(row.Status)</span></td>
+                        <td>
+                            <div class="entity-cell">
+                                <div class="entity-avatar">@row.EntityCode[..Math.Min(2, row.EntityCode.Length)]</div>
+                                <div>
+                                    <div class="entity-name">@row.EntityName</div>
+                                    <div class="entity-id">ID @row.RegistryEntityId</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@(row.HasPackage ? $"v{row.Version}" : "—")</td>
+                        <td>@(row.IsFinal ? "Yes" : "—")</td>
+                        <td>
+                            <div class="doc-progress">
+                                <div class="doc-bar">
+                                    <div class="doc-bar-fill" style="width: @(row.DocumentsExpected == 0 ? 0 : row.DocumentsUploaded * 100 / row.DocumentsExpected)%"></div>
+                                </div>
+                                <span class="doc-count">@row.DocumentsUploaded/@row.DocumentsExpected</span>
+                            </div>
+                        </td>
+                        <td>@(row.ResponsiblePerson ?? "Unassigned")</td>
+                        <td>@(row.UpdatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter, EditorRequired] public string GridTitle { get; set; } = "";
+    [Parameter] public string GridSubtitle { get; set; } = "";
+    [Parameter] public string PeriodGranularityLabel { get; set; } = "monthly period";
+    [Parameter] public IReadOnlyList<string> PeriodCodes { get; set; } = [];
+    [Parameter] public string SelectedPeriodCode { get; set; } = "";
+    [Parameter] public string? DefaultPeriodCode { get; set; }
+    [Parameter] public EventCallback<string> OnPeriodSelected { get; set; }
+    [Parameter] public RenderFragment? Notice { get; set; }
+    [Parameter] public DashboardSummaryDto? Summary { get; set; }
+    [Parameter] public IReadOnlyList<PackageGridRowDto> Rows { get; set; } = [];
+    [Parameter] public EventCallback<PackageGridRowDto> OnRowSelected { get; set; }
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
+    [Parameter] public bool EnableSelection { get; set; }
+    [Parameter] public HashSet<Guid> SelectedEntityIds { get; set; } = [];
+    [Parameter] public EventCallback<HashSet<Guid>> SelectedEntityIdsChanged { get; set; }
+
+    private bool _selectAllVisible => Rows.Count > 0 && Rows.All(r => SelectedEntityIds.Contains(r.PeriodEntityId));
+
+    private async Task ToggleRow(Guid periodEntityId, bool selected)
+    {
+        if (selected) SelectedEntityIds.Add(periodEntityId);
+        else SelectedEntityIds.Remove(periodEntityId);
+        await SelectedEntityIdsChanged.InvokeAsync(SelectedEntityIds);
+    }
+
+    private async Task ToggleSelectAllVisible(ChangeEventArgs e)
+    {
+        var selectAll = (bool)e.Value!;
+        if (selectAll)
+        {
+            foreach (var row in Rows)
+                SelectedEntityIds.Add(row.PeriodEntityId);
+        }
+        else
+        {
+            foreach (var row in Rows)
+                SelectedEntityIds.Remove(row.PeriodEntityId);
+        }
+
+        await SelectedEntityIdsChanged.InvokeAsync(SelectedEntityIds);
+    }
+
+    private static string GetStatusClass(PackageStatus status) => status switch
+    {
+        PackageStatus.Pending => "status-pending",
+        PackageStatus.Confirmed => "status-confirmed",
+        PackageStatus.Draft => "status-draft",
+        PackageStatus.Rejected => "status-rejected",
+        _ => "status-draft"
+    };
+
+    private static string GetStatusLabel(PackageStatus status) => status switch
+    {
+        PackageStatus.Pending => "Pending",
+        PackageStatus.Confirmed => "Confirmed",
+        PackageStatus.Draft => "Draft",
+        PackageStatus.Rejected => "Rejected",
+        _ => status.ToString()
+    };
+}
