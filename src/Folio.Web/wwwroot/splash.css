@@ -1,0 +1,160 @@
+/* ============================================================
+   Intro splash — spinning 3D cube shown while the app loads.
+   Markup: Components/App.razor, timing: wwwroot/splash.js.
+   Dark graphite background so the cube's cyan/indigo accents stand out.
+   ============================================================ */
+
+#folio-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 50% 40%, #2B2F3B 0%, #171A22 55%, #0C0D12 100%);
+    transition: opacity 0.45s ease, visibility 0.45s ease;
+}
+
+#folio-splash.folio-splash-hide {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.folio-splash-stage {
+    --size: 130px;
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 0;
+}
+
+.folio-splash-scene {
+    position: relative;
+    width: calc(var(--size) * 2);
+    height: calc(var(--size) * 2);
+    perspective: 1100px;
+    display: grid;
+    place-items: center;
+    animation: folio-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+
+/* Upright cube: vertical edges stay vertical, it is seen slightly from above and turns around its vertical axis. */
+.folio-splash-tilt {
+    position: absolute;
+    width: var(--size);
+    height: var(--size);
+    transform-style: preserve-3d;
+    transform: rotateX(-24deg);
+}
+
+.folio-splash-spin {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    animation: folio-spin 1.8s cubic-bezier(0.65, 0, 0.35, 1) 0.2s infinite;
+}
+
+.folio-splash-face {
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    border: 3px solid rgba(255, 255, 255, 0.92);
+    border-radius: 4px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(34, 211, 238, 0.10));
+    box-shadow: 0 0 24px rgba(34, 211, 238, 0.28) inset, 0 0 10px rgba(255, 255, 255, 0.16);
+    backface-visibility: visible;
+}
+
+.folio-splash-face:nth-child(1) { transform: translateZ(calc(var(--size) / 2)); }
+.folio-splash-face:nth-child(2) { transform: rotateY(180deg) translateZ(calc(var(--size) / 2)); }
+.folio-splash-face:nth-child(3) { transform: rotateY(90deg) translateZ(calc(var(--size) / 2)); }
+.folio-splash-face:nth-child(4) { transform: rotateY(-90deg) translateZ(calc(var(--size) / 2)); }
+.folio-splash-face:nth-child(5) { transform: rotateX(90deg) translateZ(calc(var(--size) / 2)); }
+.folio-splash-face:nth-child(6) { transform: rotateX(-90deg) translateZ(calc(var(--size) / 2)); }
+
+.folio-splash-inner-cube {
+    --size: 58px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--size);
+    height: var(--size);
+    transform: translate(-50%, -50%);
+    transform-style: preserve-3d;
+}
+
+.folio-splash-inner-cube .folio-splash-face {
+    border: 2px solid rgba(34, 211, 238, 0.95);
+    background: linear-gradient(135deg, rgba(67, 56, 202, 0.82), rgba(49, 46, 129, 0.75));
+    box-shadow: 0 0 16px rgba(30, 27, 75, 0.5) inset, 0 0 8px rgba(34, 211, 238, 0.22);
+}
+
+/* Eight edges joining the corners of the inner cube to the corners of the outer one. */
+.folio-splash-link {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: 2px;
+    height: 62.4px;
+    transform-origin: 50% 0;
+    background: rgba(34, 211, 238, 0.95);
+    box-shadow: 0 0 5px rgba(34, 211, 238, 0.35);
+}
+
+.folio-splash-link-1 { transform: translate3d(65px, 65px, 65px) rotateY(-135deg) rotateX(125.264deg); }
+.folio-splash-link-2 { transform: translate3d(65px, 65px, -65px) rotateY(-45deg) rotateX(125.264deg); }
+.folio-splash-link-3 { transform: translate3d(65px, -65px, 65px) rotateY(-135deg) rotateX(54.736deg); }
+.folio-splash-link-4 { transform: translate3d(65px, -65px, -65px) rotateY(-45deg) rotateX(54.736deg); }
+.folio-splash-link-5 { transform: translate3d(-65px, 65px, 65px) rotateY(135deg) rotateX(125.264deg); }
+.folio-splash-link-6 { transform: translate3d(-65px, 65px, -65px) rotateY(45deg) rotateX(125.264deg); }
+.folio-splash-link-7 { transform: translate3d(-65px, -65px, 65px) rotateY(135deg) rotateX(54.736deg); }
+.folio-splash-link-8 { transform: translate3d(-65px, -65px, -65px) rotateY(45deg) rotateX(54.736deg); }
+
+/* Wordmark sits in front of the cube (separate layer, always crisp and upright). */
+.folio-splash-label {
+    position: absolute;
+    top: calc(var(--size) * 1);
+    left: 0;
+    right: 0;
+    z-index: 5;
+    transform: translateY(-50%);
+    text-align: center;
+    pointer-events: none;
+    font-weight: 700;
+    font-size: calc(var(--size) * 0.3);
+    color: #fff;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+    animation: folio-label 0.7s cubic-bezier(0.2, 0.8, 0.3, 1) 0.45s both;
+}
+
+.folio-splash-shadow {
+    position: absolute;
+    top: calc(var(--size) * 1.68);
+    left: 50%;
+    margin-left: calc(var(--size) * -0.45);
+    width: calc(var(--size) * 0.9);
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(rgba(0, 0, 0, 0.45), transparent 70%);
+    animation: folio-shadow 1.8s cubic-bezier(0.65, 0, 0.35, 1) 0.2s infinite;
+}
+
+.folio-splash-tagline {
+    margin-top: 6px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    animation: folio-fade 0.8s ease-out 1s both;
+}
+
+@keyframes folio-spin { from { transform: rotateY(0); } to { transform: rotateY(360deg); } }
+@keyframes folio-pop { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
+@keyframes folio-label { from { opacity: 0; letter-spacing: 0.5em; } to { opacity: 1; letter-spacing: 0.14em; } }
+@keyframes folio-shadow { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.85); } }
+@keyframes folio-fade { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .folio-splash-spin, .folio-splash-shadow, .folio-splash-scene, .folio-splash-label, .folio-splash-tagline { animation: none; }
+    .folio-splash-label { letter-spacing: 0.14em; }
+}
