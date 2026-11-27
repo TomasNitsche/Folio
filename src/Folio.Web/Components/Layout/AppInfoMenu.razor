@@ -1,0 +1,29 @@
+@inject IHostEnvironment Environment
+
+@* Footer of the sidebar: one button that opens a small menu upwards. For now it holds the system info and the version. *@
+<div class="app-info">
+    @if (_open)
+    {
+        <div class="app-info-backdrop" @onclick="Close" aria-hidden="true"></div>
+        <div class="app-info-menu" role="menu">
+            <div class="app-info-title">System info</div>
+            <div class="app-info-row"><span class="app-info-key">Version</span><span class="app-info-value">@AppVersion.Current</span></div>
+            <div class="app-info-row"><span class="app-info-key">Environment</span><span class="app-info-value">@Environment.EnvironmentName</span></div>
+        </div>
+    }
+    <button class="app-info-button" @onclick="Toggle" title="System info" aria-haspopup="true" aria-expanded="@(_open ? "true" : "false")">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <span class="app-info-label">System info</span>
+        <span class="app-info-version">v@(AppVersion.Current)</span>
+    </button>
+</div>
+
+@code {
+    private bool _open;
+
+    private void Toggle() => _open = !_open;
+
+    private void Close() => _open = false;
+}

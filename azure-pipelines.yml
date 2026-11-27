@@ -15,8 +15,21 @@ pool:
 
 variables:
   buildConfiguration: Release
+  # Application version = <versionPrefix>.<patch>. The patch counter starts at 1 and restarts
+  # whenever versionPrefix changes. Pre-production: 0.0 -> 0.0.1, 0.0.2, ...
+  # When the application is declared production, set versionPrefix to '1.0' and the seed below to 0 -> 1.0.0, 1.0.1, ...
+  # Later releases: bump versionPrefix ('1.1', '2.0', ...).
+  versionPrefix: '0.0'
+  patch: $[counter(variables['versionPrefix'], 1)]
 
 steps:
+  # Persisted credentials let the tagging step at the end push the version tag.
+  - checkout: self
+    persistCredentials: true
+
+  - script: echo "##vso[build.updatebuildnumber]$(versionPrefix).$(patch)"
+    displayName: Set build number (application version)
+
   - task: UseDotNet@2
     displayName: Install .NET SDK
     inputs:
@@ -26,8 +39,15 @@ steps:
   - script: dotnet restore Folio.sln
     displayName: Restore
 
-  - script: dotnet build Folio.sln --configuration $(buildConfiguration) --no-restore
+  - script: dotnet build Folio.sln --configuration $(buildConfiguration) --no-restore -p:Version=$(Build.BuildNumber)
     displayName: Build
 
   - script: dotnet test Folio.sln --configuration $(buildConfiguration) --no-build --verbosity normal
     displayName: Test
+
+  # Only a successful build of main is a version: tag the commit so it shows in Repos -> Commits and releases can start from it.
+  - script: |
+      git tag $(Build.BuildNumber)
+      git push origin $(Build.BuildNumber)
+    displayName: Tag commit with the version
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))

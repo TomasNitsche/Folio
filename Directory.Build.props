@@ -1,0 +1,9 @@
+<Project>
+
+  <!-- Application version. Local builds show 0.0.0-local; the Azure DevOps pipeline overrides it with
+       -p:Version=<build number> (see azure-pipelines.yml), so every merge to main gets its own version. -->
+  <PropertyGroup>
+    <Version>0.0.0-local</Version>
+  </PropertyGroup>
+
+</Project>

@@ -315,6 +315,89 @@ body {
     width: 100%;
 }
 
+/* App info menu (sidebar footer): the menu opens upwards, a transparent backdrop closes it on outside click */
+.app-info {
+    position: relative;
+    margin-top: auto;
+    padding: 12px 10px;
+    border-top: 1px solid var(--border-light);
+}
+
+.app-info-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 16px;
+    border: none;
+    border-radius: var(--radius);
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    text-align: left;
+    transition: all var(--transition);
+}
+
+.app-info-button:hover {
+    background: var(--surface);
+    color: var(--text);
+}
+
+.app-info-version {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.app-info-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+}
+
+.app-info-menu {
+    position: absolute;
+    bottom: calc(100% - 8px);
+    left: 10px;
+    right: 10px;
+    z-index: 151;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+}
+
+.app-info-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+}
+
+.app-info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.app-info-key {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.app-info-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
 /* ── MAIN CONTENT ────────────────────────────────────────── */
 
 .main-content {
@@ -1839,4 +1922,32 @@ tbody td {
     .period-selector {
         flex-wrap: wrap;
     }
+}
+
+.dev-user-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border: 1px dashed rgba(255, 255, 255, 0.4);
+    border-radius: 6px;
+}
+
+.dev-badge {
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.dev-user-select {
+    background: #fff;
+    color: var(--primary);
+    border: 0;
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 12px;
+    max-width: 280px;
 }
