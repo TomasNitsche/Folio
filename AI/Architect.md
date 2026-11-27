@@ -182,6 +182,15 @@ Folio.sln
 - Stored procedures for persistence (future)
 - Initial skeleton uses in-memory repositories until DB schema is ready
 
+### Versioning & build
+The application version is set by the CI pipeline (`azure-pipelines.yml`), not in code. `versionPrefix` (`0.0` until the application is declared production, then `1.0`) plus a pipeline `counter` (seed 1; restarts when the prefix changes) gives the build number, e.g. `0.0.7`. The pipeline sets it as the build number, builds with `-p:Version=<build number>` and, on a successful build of `main` only, tags the commit with it (the pipeline identity needs permission to push tags). Local builds use the default `0.0.0-local` from `Directory.Build.props`. At runtime `Folio.Web/Services/AppVersion` reads the assembly informational version (without the `+commit` suffix); it is shown in the sidebar footer menu (`Components/Layout/AppInfoMenu`: button *System info* that opens a small menu upwards with version and environment).
+
+### Development user switch
+In the `Development` environment the top bar shows a **DEV** dropdown with the users from `DevUsers` (`appsettings.Development.json`); selecting one switches the acting user (`CurrentUserOptions` singleton → `CurrentUserDelegatingHandler` headers) and reloads the page. Not rendered in other environments.
+
+### Intro splash
+Spinning 3D cube with the app name while the app loads: markup in `Components/App.razor`, `wwwroot/splash.css`, `wwwroot/splash.js`.
+
 ### External integrations
 - **Registry** — entity master data (REST, snapshot on period open)
 - **Shared folders** — optional document source (TBD)

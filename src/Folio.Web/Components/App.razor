@@ -10,6 +10,7 @@
     <ResourcePreloader />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["folio.css"]" />
+    <link rel="stylesheet" href="@Assets["splash.css"]" />
     <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css" />
     <link rel="stylesheet" href="@Assets["Folio.Web.styles.css"]" />
     <ImportMap />
@@ -17,12 +18,41 @@
 </head>
 
 <body>
+    @* Intro splash: static markup, removed by splash.js once Blazor has started (see wwwroot/splash.js). *@
+    <div id="folio-splash" role="img" aria-label="Folio">
+        <div class="folio-splash-stage">
+            <div class="folio-splash-scene">
+                <div class="folio-splash-tilt">
+                    <div class="folio-splash-spin">
+                        <div class="folio-splash-face"></div><div class="folio-splash-face"></div><div class="folio-splash-face"></div>
+                        <div class="folio-splash-face"></div><div class="folio-splash-face"></div><div class="folio-splash-face"></div>
+                        <div class="folio-splash-inner-cube" aria-hidden="true">
+                            <div class="folio-splash-face"></div><div class="folio-splash-face"></div><div class="folio-splash-face"></div>
+                            <div class="folio-splash-face"></div><div class="folio-splash-face"></div><div class="folio-splash-face"></div>
+                        </div>
+                        <span class="folio-splash-link folio-splash-link-1" aria-hidden="true"></span>
+                        <span class="folio-splash-link folio-splash-link-2" aria-hidden="true"></span>
+                        <span class="folio-splash-link folio-splash-link-3" aria-hidden="true"></span>
+                        <span class="folio-splash-link folio-splash-link-4" aria-hidden="true"></span>
+                        <span class="folio-splash-link folio-splash-link-5" aria-hidden="true"></span>
+                        <span class="folio-splash-link folio-splash-link-6" aria-hidden="true"></span>
+                        <span class="folio-splash-link folio-splash-link-7" aria-hidden="true"></span>
+                        <span class="folio-splash-link folio-splash-link-8" aria-hidden="true"></span>
+                    </div>
+                </div>
+                <div class="folio-splash-shadow"></div>
+            </div>
+            <div class="folio-splash-label">FOLIO</div>
+            <div class="folio-splash-tagline">Club reporting</div>
+        </div>
+    </div>
     @* Global interactivity: the layout (sidebar toggle) needs to be interactive too, not only the pages. *@
     <Routes @rendermode="InteractiveServer" />
     <ReconnectModal />
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
     <script src="download.js"></script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script src="@Assets["splash.js"]"></script>
 </body>
 
 </html>

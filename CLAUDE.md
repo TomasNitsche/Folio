@@ -68,6 +68,18 @@ Target framework: **.NET 10**. Namespaces follow folder structure (`Folio.<Proje
 
 Full detail: `AI/Skills/registry-integration.md`.
 
+## Versioning
+
+The version comes from the CI pipeline (`azure-pipelines.yml`): `versionPrefix` (`0.0` until production, then `1.0`) + a counter → build number (e.g. `0.0.7`), passed to the build as `-p:Version=...`; a successful build of `main` tags the commit with it. Local builds are `0.0.0-local` (`Directory.Build.props`). The UI reads it via `Folio.Web/Services/AppVersion` and shows it in the sidebar footer menu `AppInfoMenu` (*System info*). Never hard-code a version in code; to change the major/minor, change `versionPrefix` in the pipeline. The pipeline identity needs permission to push tags. Details: `AI/Architect.md` → *Versioning & build*.
+
+## Development user switch
+
+In the `Development` environment the top bar shows a **DEV** user dropdown (`MainLayout`) listing the users from `DevUsers` in `Folio.Web/appsettings.Development.json`. Choosing one mutates the singleton `CurrentUserOptions` (used by `CurrentUserDelegatingHandler` for the API calls) and reloads the page, so roles and assignment-scoped access can be tried without real authentication. It never renders outside Development.
+
+## Intro splash
+
+A spinning 3D cube with the app name is shown while the app loads: static markup in `Components/App.razor`, styles in `wwwroot/splash.css`, timing in `wwwroot/splash.js` (hides after Blazor started, the layout rendered and one full cube turn). Plain HTML/CSS/JS, no dependencies.
+
 ## Claude Code project setup
 
 - `.claude/agents/` — `folio-code-reviewer`, `folio-test-writer` subagents.
