@@ -26,9 +26,12 @@
 
     <PackageReference Include="Dapper" Version="2.1.66" />
 
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
 
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.9.0" />
+
+    <!-- Direct reference only to lift the transitive version pulled in by Microsoft.Data.SqlClient (known vulnerabilities in 9.0.x). -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.15" />
 
   </ItemGroup>
 
